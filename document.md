@@ -75,3 +75,59 @@ Do ponto de vista acadêmico, a discussão sobre arquitetura de software para si
 #### Síntese e Lacuna de Pesquisa
 
 A revisão da literatura evidencia que, embora o impacto positivo do padrão Adapter sobre a manutenibilidade de software já tenha sido demonstrado empiricamente em contextos gerais da Engenharia de Software (AL-OBEIDALLAH et al., 2021; QASIM et al., 2021), e embora a comunidade de Arquitetura de Software já reconheça a relevância de preocupações arquiteturais em sistemas integrados a modelos de Inteligência Artificial Generativa (BUCAIONI et al., 2025), não foram identificados, até o presente momento, estudos empíricos que mensurem especificamente o impacto da adoção do padrão Adapter sobre a portabilidade e a manutenibilidade de aplicações web diante de cenários de mudança relacionados a provedores de Inteligência Artificial Generativa. É exatamente essa lacuna que o presente trabalho se propõe a investigar, aplicando um desenho metodológico consolidado na literatura de padrões de projeto a um contexto de aplicação emergente e ainda pouco explorado empiricamente.
+
+### Metodologia
+
+#### Classificação da Pesquisa
+
+Do ponto de vista da natureza, esta pesquisa classifica-se como aplicada, uma vez que se propõe a gerar conhecimento com aplicação prática direta sobre um problema real de Engenharia de Software, sem a pretensão de desenvolver teoria original. Quanto à abordagem, a pesquisa é predominantemente quantitativa na etapa de coleta e comparação de métricas de software, complementada por uma análise qualitativa na discussão dos resultados à luz da literatura. Quanto ao procedimento técnico, adota-se o **estudo de caso comparativo**, seguindo as diretrizes propostas por Runeson e Höst (2009) para a condução e o relato de estudos de caso em Engenharia de Software, sendo o caso investigado constituído por um único protótipo de aplicação web, implementado em duas versões arquiteturais distintas.
+
+Optou-se deliberadamente por não classificar este trabalho como um experimento controlado no sentido estatístico do termo, uma vez que o estudo envolve uma única unidade de análise (um protótipo), sem grupo de controle independente, sem randomização e sem repetição amostral que permita inferência estatística generalizável. Trata-se, portanto, de um estudo de caso comparativo de caráter exploratório, cujos resultados devem ser interpretados como evidência contextualizada e não como generalização estatística — limitação retomada com maior profundidade na subseção de ameaças à validade.
+
+#### Descrição do Protótipo e das Versões Arquiteturais
+
+O objeto de estudo consiste em um protótipo de aplicação web simples, desenvolvido especificamente para os fins desta pesquisa, cuja funcionalidade central é receber uma entrada textual do usuário e retornar uma resposta gerada por um provedor de Inteligência Artificial Generativa. Optou-se deliberadamente por manter o escopo funcional do protótipo reduzido, uma vez que o objeto de investigação deste trabalho não é a aplicação em si, mas sim o impacto arquitetural das decisões de design adotadas para sua integração com o provedor de IA.
+
+O provedor de IA Generativa inicialmente integrado ao protótipo é a API do Gemini (Google), podendo ser complementado por um segundo provedor ou por um provedor simulado (*mock*) durante a execução dos cenários de mudança descritos na subseção 3.3. O protótipo é implementado em duas versões funcionalmente equivalentes, porém arquiteturalmente distintas:
+
+- **Versão A — Arquitetura Acoplada:** nesta versão, a comunicação com a API do provedor de IA é realizada de forma direta a partir dos componentes da aplicação que dependem dessa funcionalidade, sem qualquer camada de abstração intermediária. As particularidades do formato de requisição e resposta da API do provedor ficam, portanto, diretamente expostas aos componentes consumidores.
+
+- **Versão B — Arquitetura Desacoplada:** nesta versão, a comunicação com o provedor de IA é mediada por uma interface de abstração (Target), definida pela própria aplicação, e por uma implementação concreta do padrão *Adapter*, responsável por traduzir as chamadas dessa interface genérica para o formato específico exigido pela API do provedor em uso (Adaptee), conforme a estrutura teórica apresentada na subseção 2.3. Os componentes consumidores da aplicação (Client) dependem exclusivamente da interface Target, sem conhecimento direto da implementação do provedor.
+
+Ambas as versões compartilham a mesma lógica de negócio e a mesma interface de usuário, diferenciando-se exclusivamente na forma de comunicação com o provedor de IA — condição necessária para assegurar que as diferenças de impacto observadas entre as duas versões possam ser atribuídas à decisão arquitetural investigada, e não a diferenças funcionais entre elas.
+
+#### Protocolo de Cenários de Mudança
+
+Em conformidade com a recomendação metodológica de definir o protocolo de coleta de dados previamente à sua execução — mitigando o risco de viés do pesquisador, discutido na subseção 3.5 — foram definidos três cenários controlados de mudança, aplicados de forma idêntica a ambas as versões do protótipo:
+
+1. **Cenário 1 — Substituição de provedor:** simula a necessidade de substituir integralmente o provedor de IA Generativa utilizado (por exemplo, migrar da API do Gemini para a API de outro provedor), mantendo a funcionalidade da aplicação inalterada do ponto de vista do usuário final.
+
+2. **Cenário 2 — Inclusão de um novo provedor:** simula a necessidade de incorporar um segundo provedor de IA Generativa à aplicação, mantendo o provedor original em funcionamento e permitindo que a aplicação alterne entre ambos.
+
+3. **Cenário 3 — Alteração na forma de comunicação com o provedor:** simula uma mudança no formato de requisição ou resposta da API do provedor atualmente em uso — situação que reflete uma ocorrência real e recorrente no mercado de provedores de IA Generativa, no qual atualizações de versão de API, descontinuação de modelos e alterações de esquema de dados ocorrem com frequência e fora do controle da equipe de desenvolvimento.
+
+Cada cenário é implementado separadamente em ambas as versões do protótipo, a partir de um estado inicial idêntico (mesmo *commit* de referência), permitindo que as alterações realizadas em cada versão sejam isoladas e comparadas de forma independente.
+
+#### Métricas de Avaliação
+
+Para cada cenário aplicado a cada versão do protótipo, são coletadas as seguintes métricas objetivas, com base no controle de versão do código-fonte (Git):
+
+- **Número de arquivos modificados:** quantidade de arquivos alterados para a implementação do cenário, obtida por meio do comando `git diff --stat` entre o estado inicial e o estado final da alteração.
+- **Número de linhas de código alteradas:** soma de linhas adicionadas e removidas para a implementação do cenário, também obtida via `git diff --stat`.
+- **Número de pontos de acoplamento direto ao provedor:** contagem manual dos pontos do código-fonte em que há referência direta à biblioteca ou à API específica do provedor de IA fora da camada de abstração (aplicável apenas à Versão A, servindo como métrica de caracterização do grau de acoplamento inicial).
+- **Número de testes automatizados afetados:** quantidade de testes que precisaram ser criados, removidos ou modificados para que a suíte de testes voltasse a passar após a implementação do cenário.
+
+Optou-se por não adotar métricas subjetivas de esforço (como percepção de dificuldade) como critério central de avaliação, justamente por se tratar de métricas sujeitas a viés de quem implementa e mede simultaneamente — decisão diretamente relacionada às ameaças à validade discutidas a seguir.
+
+#### Procedimento de Execução
+
+A execução da coleta de dados segue a seguinte sequência: (i) implementação completa da Versão A (arquitetura acoplada) até um estado funcional estável, correspondendo ao estado inicial de referência; (ii) aplicação sequencial dos três cenários de mudança sobre a Versão A, com coleta das métricas descritas para cada cenário, restaurando o estado de referência entre um cenário e outro; (iii) implementação completa da Versão B (arquitetura desacoplada), com escopo funcional equivalente à Versão A; (iv) aplicação sequencial dos mesmos três cenários de mudança sobre a Versão B, com coleta das mesmas métricas; e (v) consolidação e comparação dos resultados obtidos entre as duas versões, para cada cenário, conforme apresentado na seção de Resultados.
+
+#### Ameaças à Validade
+
+Em conformidade com o modelo de discussão de ameaças à validade proposto por Runeson e Höst (2009) para estudos de caso em Engenharia de Software, reconhecem-se as seguintes limitações metodológicas deste trabalho:
+
+- **Validade de construto:** as métricas adotadas (número de arquivos, linhas de código e testes afetados) constituem indicadores indiretos do esforço de manutenção, e não uma medida direta de "impacto" — decisão adotada por serem métricas objetivas e reproduzíveis, em detrimento de métricas subjetivas de esforço, mais sujeitas a viés.
+- **Validade interna:** o autor deste trabalho foi responsável tanto pela implementação de ambas as versões do protótipo quanto pela coleta das métricas, o que constitui uma ameaça relacionada ao viés do pesquisador-implementador. Essa ameaça é parcialmente mitigada pela definição prévia e documentada do protocolo de cenários de mudança, anterior à implementação de qualquer uma das versões, reduzindo a possibilidade de ajuste inconsciente da implementação em função do resultado esperado.
+- **Validade externa:** por se tratar de um estudo de caso com uma única unidade de análise, implementado por um único desenvolvedor e restrito a um domínio de aplicação específico (integração com provedores de IA Generativa em aplicações web simples), os resultados obtidos não podem ser generalizados estatisticamente para outros sistemas, domínios de aplicação ou desenvolvedores, constituindo evidência contextualizada e não uma conclusão universal.
+- **Confiabilidade:** buscou-se mitigar essa ameaça por meio da documentação detalhada do protocolo experimental apresentado nesta seção, de forma a permitir que outros pesquisadores possam reproduzir o procedimento descrito, ainda que com resultados numéricos potencialmente distintos em função de decisões de implementação específicas.
