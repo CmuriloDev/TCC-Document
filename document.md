@@ -98,7 +98,7 @@ Ambas as versões compartilham a mesma lógica de negócio e a mesma interface d
 
 #### Protocolo de Cenários de Mudança
 
-Em conformidade com a recomendação metodológica de definir o protocolo de coleta de dados previamente à sua execução — mitigando o risco de viés do pesquisador, discutido na subseção 3.5 — foram definidos três cenários controlados de mudança, aplicados de forma idêntica a ambas as versões do protótipo:
+Em conformidade com a recomendação metodológica de definir o protocolo de coleta de dados previamente à sua execução — mitigando o risco de viés do pesquisador, discutido na subseção 3.6 — foram definidos três cenários controlados de mudança, aplicados de forma idêntica a ambas as versões do protótipo:
 
 1. **Cenário 1 — Substituição de provedor:** simula a necessidade de substituir integralmente o provedor de IA Generativa utilizado (por exemplo, migrar da API do Gemini para a API de outro provedor), mantendo a funcionalidade da aplicação inalterada do ponto de vista do usuário final.
 
@@ -131,3 +131,68 @@ Em conformidade com o modelo de discussão de ameaças à validade proposto por 
 - **Validade interna:** o autor deste trabalho foi responsável tanto pela implementação de ambas as versões do protótipo quanto pela coleta das métricas, o que constitui uma ameaça relacionada ao viés do pesquisador-implementador. Essa ameaça é parcialmente mitigada pela definição prévia e documentada do protocolo de cenários de mudança, anterior à implementação de qualquer uma das versões, reduzindo a possibilidade de ajuste inconsciente da implementação em função do resultado esperado.
 - **Validade externa:** por se tratar de um estudo de caso com uma única unidade de análise, implementado por um único desenvolvedor e restrito a um domínio de aplicação específico (integração com provedores de IA Generativa em aplicações web simples), os resultados obtidos não podem ser generalizados estatisticamente para outros sistemas, domínios de aplicação ou desenvolvedores, constituindo evidência contextualizada e não uma conclusão universal.
 - **Confiabilidade:** buscou-se mitigar essa ameaça por meio da documentação detalhada do protocolo experimental apresentado nesta seção, de forma a permitir que outros pesquisadores possam reproduzir o procedimento descrito, ainda que com resultados numéricos potencialmente distintos em função de decisões de implementação específicas.
+
+### Resultados Parciais — Versão Acoplada
+
+> **Nota sobre o estado da coleta:** até o presente momento, a coleta de dados foi concluída integralmente para a Versão A (arquitetura acoplada), contemplando os três cenários de mudança definidos na subseção 3.3. A implementação e a coleta de métricas da Versão B (arquitetura desacoplada) encontram-se em andamento. Por esse motivo, esta seção apresenta os resultados obtidos exclusivamente para a Versão A, com caráter preliminar. A análise comparativa entre as duas arquiteturas — núcleo do problema de pesquisa deste trabalho — será apresentada na versão final desta seção, tão logo a coleta referente à Versão B seja concluída, momento em que esta subseção será integrada a uma seção unificada de Resultados, conforme a estrutura anunciada na Introdução.
+
+#### Consolidação das Métricas — Versão Acoplada
+
+A Tabela 1 apresenta a consolidação das métricas objetivas coletadas para os três cenários de mudança aplicados à Versão A, obtidas por meio do comando `git diff --stat` entre o estado de referência da versão e o estado resultante da aplicação de cada cenário, conforme os critérios descritos na subseção 3.4.
+
+**Tabela 1 — Métricas consolidadas por cenário (Versão Acoplada)**
+
+| Cenário | Arquivos alterados | Linhas adicionadas | Linhas removidas | Total de linhas tocadas | Testes automatizados afetados |
+|---|---|---|---|---|---|
+| 1 — Substituição de provedor | 9 | 160 | 173 | 333 | 0 |
+| 2 — Inclusão de novo provedor | 9 | 364 | 24 | 388 | 0 |
+| 3 — Alteração de formato de comunicação | 4 | 226 | 9 | 235 | 5 (1 arquivo novo) |
+
+As Tabelas 2, 3 e 4 detalham o impacto por arquivo em cada cenário, permitindo identificar não apenas a magnitude, mas também a distribuição da mudança ao longo dos componentes do sistema.
+
+**Tabela 2 — Detalhamento por arquivo, Cenário 1 (Substituição de provedor)**
+
+| Arquivo | Tipo de alteração | Linhas tocadas |
+|---|---|---|
+| `GeminiRequest.java` | Deletado | 63 |
+| `GeminiResponse.java` | Deletado | 65 |
+| `GroqRequest.java` | Criado | 68 |
+| `GroqResponse.java` | Criado | 52 |
+| `GeminiConfig.java` → `GroqConfig.java` | Renomeado/modificado | 12 |
+| `GeminiProperties.java` → `GroqProperties.java` | Renomeado/modificado | 16 |
+| `ProvedorIndisponivelException.java` | Modificado | 1 |
+| `ResumoService.java` | Modificado | 45 |
+| `application.properties` | Modificado | 10 |
+
+**Tabela 3 — Detalhamento por arquivo, Cenário 2 (Inclusão de novo provedor)**
+
+| Arquivo | Tipo de alteração | Linhas adicionadas | Linhas removidas |
+|---|---|---|---|
+| `GroqRequest.java` | Criado | 67 | 0 |
+| `GroqResponse.java` | Criado | 51 | 0 |
+| `GroqConfig.java` | Criado | 41 | 0 |
+| `GroqProperties.java` | Criado | 48 | 0 |
+| `ResumoRequest.java` | Modificado | 11 | 0 |
+| `GlobalExceptionHandler.java` | Modificado | 6 | 0 |
+| `ProvedorInvalidoException.java` | Criado | 12 | 0 |
+| `ResumoService.java` | Modificado | 144 | 24 |
+| `application.properties` | Modificado | 8 | 0 |
+
+**Tabela 4 — Detalhamento por arquivo, Cenário 3 (Alteração de formato de comunicação)**
+
+| Arquivo | Tipo de alteração | Linhas adicionadas | Linhas removidas |
+|---|---|---|---|
+| `GeminiRequest.java` | Modificado | 39 | 0 |
+| `GeminiResponse.java` | Modificado | 19 | 5 |
+| `ResumoService.java` | Modificado | 21 | 4 |
+| `ResumoServiceExtracaoGeminiTest.java` | Criado (teste) | 147 | 0 |
+
+#### Discussão Preliminar — Padrões Observados dentro da Versão Acoplada
+
+Ainda que a comparação central deste trabalho (Versão Acoplada versus Versão Desacoplada) permaneça pendente, os dados já coletados permitem observações preliminares relevantes sobre o comportamento da arquitetura acoplada diante de diferentes naturezas de mudança relacionada a provedor de IA Generativa.
+
+Em primeiro lugar, observa-se que os Cenários 1 e 2 — ambos envolvendo a incorporação de um novo provedor à aplicação, seja em substituição (Cenário 1), seja em adição (Cenário 2) — apresentaram impacto de magnitude semelhante em número de arquivos (9 em ambos), porém com perfis distintos de composição: o Cenário 1 apresentou volume expressivo de remoção de código (173 linhas), decorrente da exclusão das classes específicas do provedor substituído, enquanto o Cenário 2 apresentou remoção mínima (24 linhas), concentrada exclusivamente na reescrita do ponto de decisão de roteamento entre provedores no `ResumoService`. Tal diferença evidencia que, mesmo dentro da arquitetura acoplada, tarefas de manutenção nominalmente similares ("lidar com um novo provedor") podem apresentar assinaturas de impacto substancialmente diferentes a depender da natureza exata da mudança solicitada — achado que reforça a importância de definir cenários de mudança específicos e diversificados, em vez de tratar "mudança de provedor" como uma categoria única e homogênea.
+
+Em segundo lugar, o Cenário 3 apresentou o menor impacto entre os três em termos de código de produção (79 linhas somando as três classes efetivamente modificadas: `GeminiRequest`, `GeminiResponse` e `ResumoService`), o que é consistente com a expectativa teórica de que uma mudança de contrato dentro do mesmo provedor — sem troca ou adição de fornecedor — deveria demandar menos esforço do que os Cenários 1 e 2. Entretanto, esse cenário foi o único, entre os três, a exigir a criação de testes automatizados (147 linhas em um arquivo de teste novo), o que elevou seu impacto total a 235 linhas — segundo colocado entre os três cenários. Esse resultado ilustra uma nuance metodologicamente relevante: o Cenário 3 representa uma mudança de contrato hipotética e prospectiva, para a qual não existe, no momento da coleta, uma API real correspondente contra a qual validar a implementação; a ausência dessa validação natural deslocou o custo de garantia de corretude do processo de teste manual (possível nos Cenários 1 e 2, validados diretamente contra as APIs reais do Gemini e do Groq) para a criação de infraestrutura de teste automatizado. Esse achado sugere que o custo de manutenção de uma arquitetura acoplada, diante de mudanças de contrato ainda não materializadas pelo provedor, pode se manifestar não apenas em código de produção, mas também no esforço adicional de construção de mecanismos de validação — uma dimensão de impacto não capturada pelas métricas de código de produção isoladamente, e que será retomada na discussão comparativa final deste trabalho.
+
+Essas observações preliminares serão reexaminadas e contrastadas com os resultados equivalentes da Versão Desacoplada na versão final desta seção, de modo a responder de forma completa ao problema de pesquisa proposto.
