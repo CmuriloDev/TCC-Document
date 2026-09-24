@@ -196,3 +196,26 @@ Em primeiro lugar, observa-se que os Cenários 1 e 2 — ambos envolvendo a inco
 Em segundo lugar, o Cenário 3 apresentou o menor impacto entre os três em termos de código de produção (79 linhas somando as três classes efetivamente modificadas: `GeminiRequest`, `GeminiResponse` e `ResumoService`), o que é consistente com a expectativa teórica de que uma mudança de contrato dentro do mesmo provedor — sem troca ou adição de fornecedor — deveria demandar menos esforço do que os Cenários 1 e 2. Entretanto, esse cenário foi o único, entre os três, a exigir a criação de testes automatizados (147 linhas em um arquivo de teste novo), o que elevou seu impacto total a 235 linhas — segundo colocado entre os três cenários. Esse resultado ilustra uma nuance metodologicamente relevante: o Cenário 3 representa uma mudança de contrato hipotética e prospectiva, para a qual não existe, no momento da coleta, uma API real correspondente contra a qual validar a implementação; a ausência dessa validação natural deslocou o custo de garantia de corretude do processo de teste manual (possível nos Cenários 1 e 2, validados diretamente contra as APIs reais do Gemini e do Groq) para a criação de infraestrutura de teste automatizado. Esse achado sugere que o custo de manutenção de uma arquitetura acoplada, diante de mudanças de contrato ainda não materializadas pelo provedor, pode se manifestar não apenas em código de produção, mas também no esforço adicional de construção de mecanismos de validação — uma dimensão de impacto não capturada pelas métricas de código de produção isoladamente, e que será retomada na discussão comparativa final deste trabalho.
 
 Essas observações preliminares serão reexaminadas e contrastadas com os resultados equivalentes da Versão Desacoplada na versão final desta seção, de modo a responder de forma completa ao problema de pesquisa proposto.
+## Considerações Finais
+
+> **Nota sobre o estado desta seção:** esta seção será redigida após a conclusão da coleta de dados da Versão Desacoplada e da consequente análise comparativa entre as duas arquiteturas, retomando o problema de pesquisa, confirmando ou refutando a hipótese formulada na Introdução, e sintetizando as contribuições e limitações do trabalho.
+
+## Referências
+
+AL-OBEIDALLAH, M. G.; AL-FRAIHAT, D. G.; KHASAWNEH, A. M.; SALEH, A. M.; ADDOUS, H. Empirical Investigation of the Impact of the Adapter Design Pattern on Software Maintainability. In: INTERNATIONAL CONFERENCE ON INFORMATION TECHNOLOGY (ICIT), 2021, Amman. **Anais [...]**. IEEE, 2021. p. 206-211.
+
+BASS, L.; CLEMENTS, P.; KAZMAN, R. **Software Architecture in Practice**. 3. ed. Boston: Addison-Wesley, 2012.
+
+BUCAIONI, A.; WEYSSOW, M. et al. A Functional Software Reference Architecture for LLM-Integrated Systems. In: IEEE INTERNATIONAL CONFERENCE ON SOFTWARE ARCHITECTURE COMPANION (ICSA-C), 22., 2025, Odense. **Anais [...]**. IEEE, 2025. p. 1-5.
+
+CHIDAMBER, S. R.; KEMERER, C. F. A Metrics Suite for Object-Oriented Design. **IEEE Transactions on Software Engineering**, v. 20, n. 6, p. 476-493, 1994.
+
+GAMMA, E.; HELM, R.; JOHNSON, R.; VLISSIDES, J. **Design Patterns: Elements of Reusable Object-Oriented Software**. Boston: Addison-Wesley, 1994.
+
+INTERNATIONAL ORGANIZATION FOR STANDARDIZATION. **ISO/IEC 20233:2019 — Information technology — Cloud computing — Interoperability and portability**. Geneva: ISO, 2019.
+
+QASIM, A.; MUNAWAR, A.; HASSAN, J.; KHALID, A. Evaluating the Impact of Design Patterns on Software Maintainability: An Empirical Evaluation. In: INTERNATIONAL SUSTAINABILITY AND RESILIENCE CONFERENCE: CLIMATE CHANGE, 3., 2021, Sakheer. **Anais [...]**. IEEE, 2021.
+
+RUNESON, P.; HÖST, M. Guidelines for Conducting and Reporting Case Study Research in Software Engineering. **Empirical Software Engineering**, v. 14, n. 2, p. 131-164, 2009.
+
+WEDYAN, F.; ABUFAKHER, S. Impact of Design Patterns on Software Quality: A Systematic Literature Review. **IET Software**, v. 14, n. 1, p. 1-17, 2019.
