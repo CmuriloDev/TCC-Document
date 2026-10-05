@@ -1,7 +1,5 @@
 # Registro de Métricas — Estudo de Caso Comparativo (versão corrigida)
 
-> Substitui o METRICAS.md anterior, que tinha dois erros de transcrição (ver final do arquivo).
-
 ## Critério de medição (vale para TODAS as medições)
 
 - Comando: `git diff --numstat --no-renames <baseline> <tag> -- prototype/`
