@@ -112,12 +112,16 @@ Cada cenário é implementado separadamente em ambas as versões do protótipo, 
 
 Para cada cenário aplicado a cada versão do protótipo, são coletadas as seguintes métricas objetivas, com base no controle de versão do código-fonte (Git):
 
-- **Número de arquivos modificados:** quantidade de arquivos alterados para a implementação do cenário, obtida por meio do comando `git diff --stat` entre o estado inicial e o estado final da alteração.
-- **Número de linhas de código alteradas:** soma de linhas adicionadas e removidas para a implementação do cenário, também obtida via `git diff --stat`.
+- **Número de arquivos modificados:** quantidade de arquivos alterados para a implementação do cenário, obtida por meio do comando `git diff --numstat --no-renames` entre o estado inicial e o estado final da alteração.
+- **Número de linhas de código alteradas:** soma de linhas adicionadas e removidas para a implementação do cenário, também obtida via `git diff --numstat --no-renames`.
 - **Número de pontos de acoplamento direto ao provedor:** contagem manual dos pontos do código-fonte em que há referência direta à biblioteca ou à API específica do provedor de IA fora da camada de abstração (aplicável apenas à Versão A, servindo como métrica de caracterização do grau de acoplamento inicial).
 - **Número de testes automatizados afetados:** quantidade de testes que precisaram ser criados, removidos ou modificados para que a suíte de testes voltasse a passar após a implementação do cenário.
 
 Optou-se por não adotar métricas subjetivas de esforço (como percepção de dificuldade) como critério central de avaliação, justamente por se tratar de métricas sujeitas a viés de quem implementa e mede simultaneamente — decisão diretamente relacionada às ameaças à validade discutidas a seguir.
+
+As métricas de arquivos e linhas são obtidas com a opção `--no-renames`, que desabilita a detecção heurística de renomeações do Git (limiar padrão de 50% de similaridade) e contabiliza integralmente cada arquivo removido e cada arquivo criado. A opção torna a contagem determinística e reprodutível, pois, com a detecção ativa, o enquadramento de um mesmo par de arquivos como "renomeado" ou como "removido e criado" depende de um limiar de similaridade e não do conteúdo da mudança. O critério é aplicado de forma idêntica às duas versões; os valores com a detecção de renomeações ativa são reportados como análise de sensibilidade.
+
+Além dos totais por cenário, que constituem a métrica primária, os arquivos alterados são classificados em três grupos, com a mesma regra nas duas versões: (P) código dedicado ao provedor, isto é, arquivos cujo nome começa com o nome de um provedor (`Gemini*`, `Groq*`) ou que residem em pacote de provedor; (T) testes automatizados; e (O) demais arquivos do protótipo, subdivididos em código e configuração. A classificação é feita por arquivo, e não por linha: em arquivos mistos, como o `ResumoService` da Versão A, que reúne regras de negócio e lógica de integração, todas as linhas alteradas são contabilizadas no grupo O. Essa decomposição responde ao enunciado da hipótese, que se refere ao impacto sobre "a lógica de negócio e os demais componentes da aplicação". Declara-se que o agrupamento foi formalizado após a observação dos totais do Cenário 1 em ambas as versões, e que sua regra foi fixada por escrito antes da medição dos Cenários 2 e 3 da Versão B. Por isso, os totais e a decomposição são reportados em conjunto, inclusive quando divergem.
 
 #### Procedimento de Execução
 
@@ -138,31 +142,35 @@ Em conformidade com o modelo de discussão de ameaças à validade proposto por 
 
 #### Consolidação das Métricas — Versão Acoplada
 
-A Tabela 1 apresenta a consolidação das métricas objetivas coletadas para os três cenários de mudança aplicados à Versão A, obtidas por meio do comando `git diff --stat` entre o estado de referência da versão e o estado resultante da aplicação de cada cenário, conforme os critérios descritos na subseção 3.4.
+A Tabela 1 apresenta a consolidação das métricas objetivas coletadas para os três cenários de mudança aplicados à Versão A, obtidas por meio do comando `git diff --numstat --no-renames` entre o estado de referência da versão e o estado resultante da aplicação de cada cenário, conforme os critérios descritos na subseção 3.4.
 
 **Tabela 1 — Métricas consolidadas por cenário (Versão Acoplada)**
 
 | Cenário | Arquivos alterados | Linhas adicionadas | Linhas removidas | Total de linhas tocadas | Testes automatizados afetados |
 |---|---|---|---|---|---|
-| 1 — Substituição de provedor | 9 | 160 | 173 | 333 | 0 |
+| 1 — Substituição de provedor | 11 | 235 | 248 | 483 | 0 |
 | 2 — Inclusão de novo provedor | 9 | 364 | 24 | 388 | 0 |
 | 3 — Alteração de formato de comunicação | 4 | 226 | 9 | 235 | 5 (1 arquivo novo) |
+
+Com a detecção de renomeações do Git ativa (análise de sensibilidade), o Cenário 1 totaliza 9 arquivos e 333 linhas (160 adicionadas e 173 removidas); os Cenários 2 e 3 não contêm renomeações e têm o mesmo valor nos dois critérios.
 
 As Tabelas 2, 3 e 4 detalham o impacto por arquivo em cada cenário, permitindo identificar não apenas a magnitude, mas também a distribuição da mudança ao longo dos componentes do sistema.
 
 **Tabela 2 — Detalhamento por arquivo, Cenário 1 (Substituição de provedor)**
 
-| Arquivo | Tipo de alteração | Linhas tocadas |
-|---|---|---|
-| `GeminiRequest.java` | Deletado | 63 |
-| `GeminiResponse.java` | Deletado | 65 |
-| `GroqRequest.java` | Criado | 68 |
-| `GroqResponse.java` | Criado | 52 |
-| `GeminiConfig.java` → `GroqConfig.java` | Renomeado/modificado | 12 |
-| `GeminiProperties.java` → `GroqProperties.java` | Renomeado/modificado | 16 |
-| `ProvedorIndisponivelException.java` | Modificado | 1 |
-| `ResumoService.java` | Modificado | 45 |
-| `application.properties` | Modificado | 10 |
+| Arquivo | Tipo de alteração | Linhas adicionadas | Linhas removidas |
+|---|---|---|---|
+| `GeminiRequest.java` | Deletado | 0 | 63 |
+| `GeminiResponse.java` | Deletado | 0 | 65 |
+| `GroqRequest.java` | Criado | 68 | 0 |
+| `GroqResponse.java` | Criado | 52 | 0 |
+| `GeminiConfig.java` | Deletado | 0 | 41 |
+| `GeminiProperties.java` | Deletado | 0 | 48 |
+| `GroqConfig.java` | Criado | 41 | 0 |
+| `GroqProperties.java` | Criado | 48 | 0 |
+| `ProvedorIndisponivelException.java` | Modificado | 1 | 1 |
+| `ResumoService.java` | Modificado | 20 | 25 |
+| `application.properties` | Modificado | 5 | 5 |
 
 **Tabela 3 — Detalhamento por arquivo, Cenário 2 (Inclusão de novo provedor)**
 
@@ -175,7 +183,7 @@ As Tabelas 2, 3 e 4 detalham o impacto por arquivo em cada cenário, permitindo 
 | `ResumoRequest.java` | Modificado | 11 | 0 |
 | `GlobalExceptionHandler.java` | Modificado | 6 | 0 |
 | `ProvedorInvalidoException.java` | Criado | 12 | 0 |
-| `ResumoService.java` | Modificado | 144 | 24 |
+| `ResumoService.java` | Modificado | 120 | 24 |
 | `application.properties` | Modificado | 8 | 0 |
 
 **Tabela 4 — Detalhamento por arquivo, Cenário 3 (Alteração de formato de comunicação)**
@@ -191,9 +199,9 @@ As Tabelas 2, 3 e 4 detalham o impacto por arquivo em cada cenário, permitindo 
 
 Ainda que a comparação central deste trabalho (Versão Acoplada versus Versão Desacoplada) permaneça pendente, os dados já coletados permitem observações preliminares relevantes sobre o comportamento da arquitetura acoplada diante de diferentes naturezas de mudança relacionada a provedor de IA Generativa.
 
-Em primeiro lugar, observa-se que os Cenários 1 e 2 — ambos envolvendo a incorporação de um novo provedor à aplicação, seja em substituição (Cenário 1), seja em adição (Cenário 2) — apresentaram impacto de magnitude semelhante em número de arquivos (9 em ambos), porém com perfis distintos de composição: o Cenário 1 apresentou volume expressivo de remoção de código (173 linhas), decorrente da exclusão das classes específicas do provedor substituído, enquanto o Cenário 2 apresentou remoção mínima (24 linhas), concentrada exclusivamente na reescrita do ponto de decisão de roteamento entre provedores no `ResumoService`. Tal diferença evidencia que, mesmo dentro da arquitetura acoplada, tarefas de manutenção nominalmente similares ("lidar com um novo provedor") podem apresentar assinaturas de impacto substancialmente diferentes a depender da natureza exata da mudança solicitada — achado que reforça a importância de definir cenários de mudança específicos e diversificados, em vez de tratar "mudança de provedor" como uma categoria única e homogênea.
+Em primeiro lugar, observa-se que os Cenários 1 e 2 — ambos envolvendo a incorporação de um novo provedor à aplicação, seja em substituição (Cenário 1), seja em adição (Cenário 2) — apresentaram impactos de magnitude próxima em número de arquivos (11 e 9, respectivamente), porém com perfis distintos de composição: o Cenário 1 apresentou volume expressivo de remoção de código (248 linhas, de um total de 483), decorrente da exclusão das classes específicas do provedor substituído, enquanto o Cenário 2 apresentou remoção mínima (24 linhas, de um total de 388), concentrada exclusivamente na reescrita do ponto de decisão de roteamento entre provedores no `ResumoService`. Tal diferença evidencia que, mesmo dentro da arquitetura acoplada, tarefas de manutenção nominalmente similares ("lidar com um novo provedor") podem apresentar assinaturas de impacto substancialmente diferentes a depender da natureza exata da mudança solicitada — achado que reforça a importância de definir cenários de mudança específicos e diversificados, em vez de tratar "mudança de provedor" como uma categoria única e homogênea.
 
-Em segundo lugar, o Cenário 3 apresentou o menor impacto entre os três em termos de código de produção (79 linhas somando as três classes efetivamente modificadas: `GeminiRequest`, `GeminiResponse` e `ResumoService`), o que é consistente com a expectativa teórica de que uma mudança de contrato dentro do mesmo provedor — sem troca ou adição de fornecedor — deveria demandar menos esforço do que os Cenários 1 e 2. Entretanto, esse cenário foi o único, entre os três, a exigir a criação de testes automatizados (147 linhas em um arquivo de teste novo), o que elevou seu impacto total a 235 linhas — segundo colocado entre os três cenários. Esse resultado ilustra uma nuance metodologicamente relevante: o Cenário 3 representa uma mudança de contrato hipotética e prospectiva, para a qual não existe, no momento da coleta, uma API real correspondente contra a qual validar a implementação; a ausência dessa validação natural deslocou o custo de garantia de corretude do processo de teste manual (possível nos Cenários 1 e 2, validados diretamente contra as APIs reais do Gemini e do Groq) para a criação de infraestrutura de teste automatizado. Esse achado sugere que o custo de manutenção de uma arquitetura acoplada, diante de mudanças de contrato ainda não materializadas pelo provedor, pode se manifestar não apenas em código de produção, mas também no esforço adicional de construção de mecanismos de validação — uma dimensão de impacto não capturada pelas métricas de código de produção isoladamente, e que será retomada na discussão comparativa final deste trabalho.
+Em segundo lugar, o Cenário 3 apresentou o menor impacto entre os três em termos de código de produção (88 linhas, sendo 79 adicionadas e 9 removidas, somando as três classes efetivamente modificadas: `GeminiRequest`, `GeminiResponse` e `ResumoService`), o que é consistente com a expectativa teórica de que uma mudança de contrato dentro do mesmo provedor — sem troca ou adição de fornecedor — deveria demandar menos esforço do que os Cenários 1 e 2. Entretanto, esse cenário foi o único, entre os três, a exigir a criação de testes automatizados (147 linhas em um arquivo de teste novo), o que elevou seu impacto total a 235 linhas, das quais 147 (63%) correspondem ao teste — total que, ainda assim, permanece o menor entre os três cenários. Esse resultado ilustra uma nuance metodologicamente relevante: o Cenário 3 representa uma mudança de contrato hipotética e prospectiva, para a qual não existe, no momento da coleta, uma API real correspondente contra a qual validar a implementação; a ausência dessa validação natural deslocou o custo de garantia de corretude do processo de teste manual (possível nos Cenários 1 e 2, validados diretamente contra as APIs reais do Gemini e do Groq) para a criação de infraestrutura de teste automatizado. Esse achado sugere que o custo de manutenção de uma arquitetura acoplada, diante de mudanças de contrato ainda não materializadas pelo provedor, pode se manifestar não apenas em código de produção, mas também no esforço adicional de construção de mecanismos de validação — uma dimensão de impacto não capturada pelas métricas de código de produção isoladamente, e que será retomada na discussão comparativa final deste trabalho.
 
 Essas observações preliminares serão reexaminadas e contrastadas com os resultados equivalentes da Versão Desacoplada na versão final desta seção, de modo a responder de forma completa ao problema de pesquisa proposto.
 ## Considerações Finais
