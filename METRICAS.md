@@ -193,6 +193,27 @@ Leitura: a lógica de extração mudou o mesmo tanto (88 contra 89 linhas de pro
 
 Reportar os dois totais: no critério `--no-renames` a B soma mais (o Cenário 1 conta o pacote antigo apagado e o novo criado por inteiro); no critério padrão os totais são praticamente iguais. O efeito consistente é o grupo O: o código fora do pacote do provedor.
 
+## Referências textuais ao provedor fora do grupo P (grau de acoplamento por estado)
+
+Contagem de ocorrências (sem diferenciar maiúsculas) de "gemini" ou "groq" em arquivos `.java` de `src/main` fora de `provider/` e fora de nomes `Gemini*`/`Groq*`. É uma medida do ESTADO de cada versão, não do custo de uma mudança. Script do Codador: `scratchpad/acoplamento.sh`.
+
+| Estado | Arquivos | Ocorrências | Onde |
+|---|---|---|---|
+| 295d660 (baseline acoplada) | 2 | 26 | `ResumoService` 25 + comentário em `ProvedorIndisponivelException` (linha 4) 1 |
+| cenario-1-acoplada | 2 | 25 | `ResumoService` 24 + 1 |
+| cenario-2-acoplada | 3 | 78 | `ResumoService` 74 + `ResumoRequest` 3 (Javadoc) + 1 |
+| cenario-3-acoplada | 2 | 29 | `ResumoService` 28 + 1 |
+| 497ed71 (baseline desacoplada) | 0 | 0 | — |
+| cenario-1/2/3-desacoplada | 0 | 0 | — |
+
+Validação: sem excluir P, a mesma busca encontra 54 ocorrências em 497ed71; no Cenário 2 da desacoplada, os 10 arquivos com o nome estão todos em `provider/gemini` ou `provider/groq`. Contagem independente com `grep -o` no `ResumoService` deu 25, 24, 74 e 28.
+
+Ressalvas para o texto:
+- A contagem é textual: soma imports, tipos, campos, literais e comentários. Chamar de "referências textuais ao provedor", não de "pontos de acoplamento". As linhas 3–5 do `ResumoService` (3–8 no Cenário 2) são imports de tipos específicos de provedor: 3 na baseline, 6 com dois provedores.
+- Na desacoplada o zero é, em parte, uma restrição imposta no design (nenhum nome de provedor fora de `provider/`, inclusive o comentário genérico no DTO). Ele confirma que a restrição foi cumprida; não é evidência independente. A evidência comparativa está no custo das mudanças (grupo O).
+- Leitura descritiva: na acoplada o número triplica ao incluir o segundo provedor (26 → 78), isto é, cresce com o número de provedores; na desacoplada permanece zero.
+- A checar: o Codador disse que o comentário de `ProvedorIndisponivelException` ainda diz "(Gemini)" no Cenário 1, mas o diff do Cenário 1 registra 1 linha trocada nesse arquivo, e um relato anterior dizia que o comentário foi atualizado para Groq. Conferir com `git show cenario-1-acoplada:<caminho da exceção>` (não altera nenhuma contagem).
+
 ## Status de verificação
 
 - **Verificado por reexecução.** Os seis pares foram remedidos com o `medir.sh` final (`--no-renames` e critério padrão) e coincidem em todos os valores com as tabelas deste arquivo. Classificação usada: T = qualquer arquivo em `src/test/` (regra aplicada primeiro); P = caminho em `provider/gemini|groq/` ou nome `Gemini*`/`Groq*`; O configuração = `src/main/resources/*`; O código = o restante. Só o `METRICAS.md` do Cenário 3 da acoplada (status A) está fora de `prototype/`, e não entra em nenhum total.
